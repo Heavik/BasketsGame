@@ -25,7 +25,7 @@ namespace Brightgroove.BasketsGame
 
         public Player ClosestWinner { get; private set; }
 
-        public void Start()
+        public Game()
         {
             var rnd = new Random();
             RealNumber = rnd.Next(Constants.MinBasketWeight, Constants.MaxBasketWeight);
@@ -62,9 +62,11 @@ namespace Brightgroove.BasketsGame
         {
             lock (_lock)
             {
-                if (delta <= _closestDelta)
+                if (delta < _closestDelta)
                 {
+                    _closestDelta = delta;
                     ClosestWinner = player;
+                    player.ClosestGuess = player.LastGuess;
                 }
             }
         }

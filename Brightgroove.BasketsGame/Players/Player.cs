@@ -19,6 +19,8 @@ namespace Brightgroove.BasketsGame.Players
 
         public int LastGuess { get; set; }
 
+        public int ClosestGuess { get; set; }
+
         public static Player CreatePlayer(string name, PlayerType playerType)
         {
             if(_players.ContainsKey(playerType))
@@ -39,7 +41,6 @@ namespace Brightgroove.BasketsGame.Players
         public void GuessNumber(Game game)
         {
             LastGuess = GuessAlgorithm(game);
-            Console.WriteLine($"{Name} guess is: {LastGuess}");
             game.MakeAttempt(this);
         }
 

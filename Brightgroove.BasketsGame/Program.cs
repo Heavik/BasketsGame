@@ -1,6 +1,7 @@
 ﻿using Brightgroove.BasketsGame.Players;
-using System;
+using Brightgroove.BasketsGame.UI;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Brightgroove.BasketsGame
@@ -9,42 +10,41 @@ namespace Brightgroove.BasketsGame
     {
         public static void Main(string[] args)
         {
-            var game = new Game();
-            game.Start();
-
-            //Console.WriteLine("RealNumber is: {0}", game.RealNumber);
-
-            var players = new[]
+            int playersNumber = UserDialog.ChoosePlayerNumber();
+            var playersList = new List<Player>();
+            for(int i = 1; i <= playersNumber; i++)
             {
-                //Player.CreatePlayer("Random", PlayerType.Random),
-                Player.CreatePlayer("Thorough", PlayerType.Thorough),
-                Player.CreatePlayer("Memory", PlayerType.Memory),
-                Player.CreatePlayer("Cheater Random", PlayerType.CheaterRandom),
-                Player.CreatePlayer("Cheater Thorough", PlayerType.CheaterThorough)
-            };
+                playersList.Add(UserDialog.CreatePlayer(i));
+            }
+
+            var game = new Game();
+
+            UserDialog.GameBegins(game);
+
+            var cts = new CancellationTokenSource(Constants.GameTimeoutMillisec);
 
             var tasksList = new List<Task>();
 
-            foreach (var player in players)
+            foreach (var player in playersList)
             {
-                tasksList.Add(StartPlaying(player, game));
+                tasksList.Add(StartPlaying(player, game, cts.Token));
             }
 
-            var finish = Task.WhenAny(tasksList);
-            finish.Wait();
+            Task.WaitAny(tasksList.ToArray());
 
-            Console.WriteLine("Real number is: {0} Winner is: {1}, Total attempts: {2}", game.RealNumber, game.Winner, game.TotalAttempts);
+            UserDialog.GameResults(game);
         }
 
-        private static Task StartPlaying(Player player, Game game)
+        private static Task StartPlaying(Player player, Game game, CancellationToken token)
         {
-            return Task.Run(() =>
+            return Task.Factory.StartNew(() =>
             {
                 while (!game.IsStopped)
                 {
+                    token.ThrowIfCancellationRequested();
                     player.GuessNumber(game);
                 }
-            });
+            }, token);
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public enum PlayerType
     {
-        Random,
+        Random = 1,
         Memory,
         Thorough,
         CheaterRandom,
