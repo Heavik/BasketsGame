@@ -6,8 +6,6 @@ namespace Brightgroove.BasketsGame.Players
 {
     public abstract class Player
     {
-        private readonly string _name;
-
         private static readonly Dictionary<PlayerType, Func<string, Player>> _players = new Dictionary<PlayerType, Func<string, Player>>
         {
             { PlayerType.Memory, name => new MemoryPlayer(name) },
@@ -17,7 +15,9 @@ namespace Brightgroove.BasketsGame.Players
             { PlayerType.CheaterThorough, name => new Cheater(new ThoroughPlayer(name)) }
         };
 
-        public string Name { get { return _name; } }
+        public string Name { get; }
+
+        public int LastGuess { get; set; }
 
         public static Player CreatePlayer(string name, PlayerType playerType)
         {
@@ -29,18 +29,18 @@ namespace Brightgroove.BasketsGame.Players
             throw new ArgumentException("Player type is not supported");
         }
 
-        public Player(string name)
+        protected Player(string name)
         {
-            _name = name;
+            Name = name;
         }
 
         public abstract int GuessAlgorithm(Game game);
 
         public void GuessNumber(Game game)
         {
-            int guess = GuessAlgorithm(game);
-            Console.WriteLine($"{Name} guess is: {guess}");
-            game.MakeAttempt(guess, this);
+            LastGuess = GuessAlgorithm(game);
+            Console.WriteLine($"{Name} guess is: {LastGuess}");
+            game.MakeAttempt(this);
         }
 
         public void PutOnHold(int milliseconds)

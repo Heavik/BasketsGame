@@ -17,6 +17,7 @@ namespace Brightgroove.BasketsGame.Players
             {
                 guess = base.GuessAlgorithm(game);
             }
+            _alreadyGuessed.Add(guess);
 
             return guess;
         }

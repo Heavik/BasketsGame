@@ -1,5 +1,7 @@
 ﻿using Brightgroove.BasketsGame.Players;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Brightgroove.BasketsGame
 {
@@ -10,27 +12,39 @@ namespace Brightgroove.BasketsGame
             var game = new Game();
             game.Start();
 
-            var p1 = Player.CreatePlayer("Random", PlayerType.Random);
-            var p2 = Player.CreatePlayer("Thorough", PlayerType.Thorough);
-            var p3 = Player.CreatePlayer("Memory", PlayerType.Memory);
-            var p4 = Player.CreatePlayer("Cheater Random", PlayerType.CheaterRandom);
-            var p5 = Player.CreatePlayer("Cheater Thorough", PlayerType.CheaterThorough);
+            //Console.WriteLine("RealNumber is: {0}", game.RealNumber);
 
-            Console.WriteLine("RealNumber is: {0}", game.RealNumber);
-
-            while(!game.IsStopped)
+            var players = new[]
             {
-                p1.GuessNumber(game);
-                p2.GuessNumber(game);
-                p3.GuessNumber(game);
-                p4.GuessNumber(game);
-                p5.GuessNumber(game);
+                //Player.CreatePlayer("Random", PlayerType.Random),
+                Player.CreatePlayer("Thorough", PlayerType.Thorough),
+                Player.CreatePlayer("Memory", PlayerType.Memory),
+                Player.CreatePlayer("Cheater Random", PlayerType.CheaterRandom),
+                Player.CreatePlayer("Cheater Thorough", PlayerType.CheaterThorough)
+            };
+
+            var tasksList = new List<Task>();
+
+            foreach (var player in players)
+            {
+                tasksList.Add(StartPlaying(player, game));
             }
+
+            var finish = Task.WhenAny(tasksList);
+            finish.Wait();
+
+            Console.WriteLine("Real number is: {0} Winner is: {1}, Total attempts: {2}", game.RealNumber, game.Winner, game.TotalAttempts);
         }
 
-        private static void StartPlaying(Player player)
+        private static Task StartPlaying(Player player, Game game)
         {
-
+            return Task.Run(() =>
+            {
+                while (!game.IsStopped)
+                {
+                    player.GuessNumber(game);
+                }
+            });
         }
     }
 }

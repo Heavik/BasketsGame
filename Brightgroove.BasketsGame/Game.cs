@@ -7,45 +7,71 @@ namespace Brightgroove.BasketsGame
 {
     public class Game
     {
-        private bool _isStopped = false;
         private int _attempts = 0;
-        private int _realNumber;
-        private HashSet<int> _triedNumbers = new HashSet<int>();
+        private int _closestDelta = int.MaxValue;
+        private readonly HashSet<int> _triedNumbers = new HashSet<int>();
 
-        public int RealNumber { get { return _realNumber; } }
-        public ICollection<int> TriedNumbers { get { return _triedNumbers; } }
-        public bool IsStopped { get { return _isStopped; } }
+        private readonly object _lock = new object();
+
+        public int RealNumber { get; private set; }
+
+        public ICollection<int> TriedNumbers => _triedNumbers;
+
+        public bool IsStopped { get; private set; } = false;
+
+        public int TotalAttempts => _attempts;
+
+        public string Winner { get; private set; } = string.Empty;
+
+        public Player ClosestWinner { get; private set; }
 
         public void Start()
         {
             var rnd = new Random();
-            _realNumber = rnd.Next(Constants.MinBasketWeight, Constants.MaxBasketWeight);
+            RealNumber = rnd.Next(Constants.MinBasketWeight, Constants.MaxBasketWeight);
         }
 
-        public void MakeAttempt(int number, Player player)
+        public void MakeAttempt(Player player)
         {
-            if(!_isStopped && _attempts < Constants.MaxAttempts)
+            _triedNumbers.Add(player.LastGuess);
+            Interlocked.Increment(ref _attempts);
+            int delta = Math.Abs(RealNumber - player.LastGuess);
+            if (delta > 0)
             {
-                _triedNumbers.Add(number);
-                if(_realNumber == number)
+                UpdateClosestWinner(delta, player);
+                player.PutOnHold(delta);
+            }
+            lock (_lock)
+            {
+                if (!IsStopped && _attempts < Constants.MaxAttempts)
+                {
+                    if (RealNumber == player.LastGuess)
+                    {
+                        Winner = player.Name;
+                        Stop();
+                    }
+                }
+                else
                 {
                     Stop();
                 }
-                int delta = Math.Abs(_realNumber - number);
-                if(delta > 0)
-                {
-                    player.PutOnHold(delta);
-                }
-                Interlocked.Increment(ref _attempts);
-            } else
-            {
-                Stop();
             }
         }
 
-        public void Stop()
+        private void UpdateClosestWinner(int delta, Player player)
         {
-            _isStopped = true;
+            lock (_lock)
+            {
+                if (delta <= _closestDelta)
+                {
+                    ClosestWinner = player;
+                }
+            }
+        }
+
+        private void Stop()
+        {
+            IsStopped = true;
         }
     }
 }
